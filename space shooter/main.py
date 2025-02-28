@@ -18,7 +18,7 @@ surf.fill('orange')
 x = 100
 display_surface.blit(surf,(x,150)) # moved outside the loop thus will be overwritten. Just here as reminder.
 
-# surface from image
+# surfaces and rectangles from imagefiles
 player_surf = pygame.image.load(path.join('images','player.png')).convert_alpha()
 player_rect = player_surf.get_frect(midbottom = (WIN_WIDTH //2 , WIN_HEIGHT-10))
 
@@ -31,6 +31,7 @@ meteor_rect = meteor_surf.get_frect(center = (WIN_WIDTH //2 , WIN_HEIGHT //2))
 laser_surf = pygame.image.load(path.join('images','laser.png')).convert_alpha()
 laser_rect = laser_surf.get_frect(bottomleft = (20,WIN_HEIGHT-20))
 
+# We can create plain (F)rects as well.
 
 
 running = True
@@ -45,8 +46,11 @@ while running:
     #draw the game
 
     display_surface.fill("gray")
+    # Stars in Background
     for pos in star_positions:
         display_surface.blit(star_surf,pos)
+
+    # Player Movement
     if (player_rect.right > WIN_WIDTH or player_rect.left<0):
         player_movement *= -1
     player_rect.right += player_movement

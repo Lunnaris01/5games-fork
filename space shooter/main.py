@@ -19,6 +19,8 @@ x = 100
 
 # surface from image
 player_surf = pygame.image.load(path.join('images','player.png')).convert_alpha()
+player_rect = player_surf.get_frect(midbottom = (WIN_WIDTH //2 , WIN_HEIGHT-10))
+
 star_surf = pygame.image.load(path.join('images','star.png')).convert_alpha()
 star_positions = [(random.randint(0,WIN_WIDTH-1),random.randint(0,WIN_HEIGHT-1)) for _ in range(20)]
 
@@ -36,12 +38,12 @@ while running:
     display_surface.fill("gray")
     for pos in star_positions:
         display_surface.blit(star_surf,pos)
+    if (player_rect.right < WIN_WIDTH):
+        player_rect.right +=  0.1
 
     display_surface.blit(surf,(x,150)) #block image transfer
-    if x<500:
-        x += 0.05
 
-    display_surface.blit(player_surf,(x+200,300))
+    display_surface.blit(player_surf,player_rect)
     pygame.display.update()
 
 

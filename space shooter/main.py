@@ -13,7 +13,7 @@ display_surface = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
 pygame.display.set_caption("Space Shooter")
 
 clock = pygame.time.Clock()
-dt = 16
+dt = 16/1000
 
 running = True
 
@@ -26,8 +26,9 @@ display_surface.blit(surf,(x,150)) # moved outside the loop thus will be overwri
 
 # surfaces and rectangles from imagefiles
 player_surf = pygame.image.load(path.join('images','player.png')).convert_alpha()
-player_rect = player_surf.get_frect(midbottom = (WIN_WIDTH //2 , WIN_HEIGHT-10))
+player_rect = player_surf.get_frect(midbottom = (WIN_WIDTH //2-50 , WIN_HEIGHT-5))
 player_direction = pygame.math.Vector2((1,1))
+player_speed = 50.0
 
 star_surf = pygame.image.load(path.join('images','star.png')).convert_alpha()
 star_positions = [(random.randint(0,WIN_WIDTH-1),random.randint(0,WIN_HEIGHT-1)) for _ in range(20)]
@@ -42,7 +43,6 @@ laser_rect = laser_surf.get_frect(bottomleft = (20,WIN_HEIGHT-20))
 
 
 while running:
-
     # Event loop
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -60,15 +60,14 @@ while running:
         player_direction.x *= -1
     if (player_rect.bottom > WIN_HEIGHT or player_rect.top<0):
         player_direction.y *= -1
-    player_rect.center += player_direction*dt/16
+    player_rect.center += player_direction*player_speed*dt
 
     display_surface.blit(meteor_surf,meteor_rect)
     display_surface.blit(laser_surf,laser_rect)
     display_surface.blit(player_surf,player_rect)
     pygame.display.update()
+    dt = clock.tick() / 1000
 
-    dt = clock.tick()
-    print(dt,clock.get_fps())
 
 
 pygame.quit()

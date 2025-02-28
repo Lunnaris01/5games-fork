@@ -27,7 +27,7 @@ display_surface.blit(surf,(x,150)) # moved outside the loop thus will be overwri
 # surfaces and rectangles from imagefiles
 player_surf = pygame.image.load(path.join('images','player.png')).convert_alpha()
 player_rect = player_surf.get_frect(midbottom = (WIN_WIDTH //2-50 , WIN_HEIGHT-5))
-player_direction = pygame.math.Vector2((1,1))
+player_direction = pygame.math.Vector2((0,0))
 player_speed = 50.0
 
 star_surf = pygame.image.load(path.join('images','star.png')).convert_alpha()
@@ -47,6 +47,17 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_d:
+                player_direction.x = 1
+            if event.key == pygame.K_a:
+                player_direction.x = -1
+            if event.key == pygame.K_w:
+                player_direction.y = -1
+            if event.key == pygame.K_s:
+                player_direction.y = 1
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            player_rect.center = event.pos
 
     #draw the game
 

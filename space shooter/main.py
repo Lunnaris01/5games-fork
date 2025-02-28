@@ -1,4 +1,5 @@
 import pygame
+from os import path
 
 # CONSTS
 
@@ -16,7 +17,7 @@ surf.fill('orange')
 x = 100
 
 # surface from image
-player_surf = pygame.image.load('images/player.png')
+player_surf = pygame.image.load(path.join('images','player.png')).convert_alpha()
 
 
 running = True
@@ -35,7 +36,7 @@ while running:
     if x<500:
         x += 0.05
 
-    display_surface.blit(player_surf,(600,300))
+    display_surface.blit(player_surf,(x+200,300))
     pygame.display.update()
 
 

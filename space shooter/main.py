@@ -20,7 +20,7 @@ x = 100
 # surface from image
 player_surf = pygame.image.load(path.join('images','player.png')).convert_alpha()
 star_surf = pygame.image.load(path.join('images','star.png')).convert_alpha()
-
+star_positions = [(random.randint(0,WIN_WIDTH-1),random.randint(0,WIN_HEIGHT-1)) for _ in range(20)]
 
 
 running = True
@@ -34,8 +34,8 @@ while running:
     #draw the game
 
     display_surface.fill("gray")
-    for i in range(20):
-        display_surface.blit(star_surf,(random.randint(0,WIN_WIDTH-1),random.randint(0,WIN_HEIGHT-1)))
+    for pos in star_positions:
+        display_surface.blit(star_surf,pos)
 
     display_surface.blit(surf,(x,150)) #block image transfer
     if x<500:

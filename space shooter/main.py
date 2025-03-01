@@ -9,16 +9,21 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.image.load(path.join('images','player.png')).convert_alpha()
         self.rect = self.image.get_frect(midbottom = (WIN_WIDTH //2-50 , WIN_HEIGHT-5))
         self.player_speed = 100
+        self.direction = pygame.Vector2()
 
     def update(self,keys,keys_justpressed,dt):
-        self.rect.x += (int(keys[pygame.K_d]) - int(keys[pygame.K_a]))*dt*self.player_speed
-        self.rect.y += (int(keys[pygame.K_s]) - int(keys[pygame.K_w]))*dt*self.player_speed
+        self.direction.x = int(keys[pygame.K_d]) - int(keys[pygame.K_a])
+        self.direction.y = int(keys[pygame.K_s]) - int(keys[pygame.K_w])
+        self.rect.center += self.direction *dt*self.player_speed
+        if keys_justpressed[pygame.K_SPACE]:
+            print("Play shooting animation!!")
 
 class Laser(pygame.sprite.Sprite):
-    def __init__(self, *groups, pos):
+    def __init__(self, pos, *groups):
         super().__init__(*groups)
         self.image = pygame.image.load(path.join('images','laser.png')).convert_alpha()  
         self.rect = self.image.get_frect(midbottom = (pos))
+        self.direction = pygame.Vector2()
 
 # CONSTS
 

@@ -65,14 +65,21 @@ while running:
     #draw the game
 
 
-    # inputs without the event loop!
+    # inputs without the event loop! Let's spawn a laser with a click!
     if (pygame.mouse.get_just_pressed()[0]):
         laser_rect = laser_surf.get_frect(bottomleft = (20,WIN_HEIGHT-20))
         laser_rect.midbottom = pygame.mouse.get_pos()
         lasers.append(laser_rect)
     keys = pygame.key.get_pressed()
+    # this works but is chunky
     if keys[pygame.K_s]:
         player_direction.y = 1
+    elif keys[pygame.K_w]:
+        player_direction.y = -1
+    else:
+        player_direction.y = 0
+    # Smart solution in one line! Bonus: If we press both we automatically have 0 movement which would need an extra elif for the other approach!
+    player_direction.x = int(keys[pygame.K_d]) - int(keys[pygame.K_a])
 
     display_surface.fill("gray")
     # Stars in Background

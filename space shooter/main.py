@@ -17,7 +17,10 @@ class Player(pygame.sprite.Sprite):
         self.player_speed = 250
         self.direction = pygame.Vector2()
 
-        # gun cooldown
+        # mask
+        self.mask = pygame.mask.from_surface(self.image)
+
+        # laser cooldown
         self.can_shoot = True
         self.laser_shoot_time = 0
         self.cooldown_duration = 400
@@ -60,7 +63,8 @@ class Meteor(pygame.sprite.Sprite):
         self.creationtime = pygame.time.get_ticks()
         self.direction = pygame.Vector2(random.randint(-500,500)/1000,1)
         self.speed = random.randint(250,550)
-        
+
+        self.mask = pygame.mask.from_surface(self.image)    
     
     def update(self, key, keys_justpressed,dt):
         self.rect.center += self.direction * self.speed * dt
@@ -75,6 +79,7 @@ class Laser(pygame.sprite.Sprite):
         self.rect = self.image.get_frect(midbottom = pos)
         self.direction = pygame.Vector2(0,-1)
         self.shootingspeed = 1000
+        self.mask = pygame.mask.from_surface(self.image)    
 
     def update(self,keys,keys_justpressed,dt):
         self.rect.center += self.direction*self.shootingspeed*dt
@@ -82,9 +87,9 @@ class Laser(pygame.sprite.Sprite):
             self.kill()
 
 def collisions():
-    if (pygame.sprite.spritecollide(player,meteor_sprites,False)):
+    if (pygame.sprite.spritecollide(player,meteor_sprites,False,pygame.sprite.collide_mask)):
         return False
-    pygame.sprite.groupcollide(laser_sprites,meteor_sprites,True,True)
+    pygame.sprite.groupcollide(laser_sprites,meteor_sprites,True,True,pygame.sprite.collide_mask)
     return True
 
 def display_score():
@@ -130,7 +135,6 @@ player = Player(all_sprites)
 meteor_event = pygame.event.custom_type()
 meteor_spawn_cooldown = 500
 pygame.time.set_timer(meteor_event,meteor_spawn_cooldown)
-
 while running:
 
     keys = pygame.key.get_pressed()
@@ -142,7 +146,6 @@ while running:
             running = False
         if event.type == meteor_event:
             Meteor(meteor_surf, None ,all_sprites, meteor_sprites)
-
 
     # Update all the sprites at once
     all_sprites.update(keys,keys_justpressed,dt)

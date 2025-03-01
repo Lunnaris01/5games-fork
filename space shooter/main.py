@@ -66,11 +66,13 @@ while running:
 
 
     # inputs without the event loop! Let's spawn a laser with a click!
+    # the same functionality is implemented for the spacebar outside the event loop below!
     if (pygame.mouse.get_just_pressed()[0]):
         laser_rect = laser_surf.get_frect(bottomleft = (20,WIN_HEIGHT-20))
         laser_rect.midbottom = pygame.mouse.get_pos()
         lasers.append(laser_rect)
     keys = pygame.key.get_pressed()
+    keys_justpressed = pygame.key.get_just_pressed()
     # this works but is chunky
     if keys[pygame.K_s]:
         player_direction.y = 1
@@ -80,6 +82,16 @@ while running:
         player_direction.y = 0
     # Smart solution in one line! Bonus: If we press both we automatically have 0 movement which would need an extra elif for the other approach!
     player_direction.x = int(keys[pygame.K_d]) - int(keys[pygame.K_a])
+    # We can normalize the speed e.g. if the game is not a platformer and we dont want to have a higher diagonal speed compared to the horizontal/vertical speed.
+    #player_direction = player_direction.normalize() if player_direction else player_direction
+    player_rect.center += player_direction*player_speed*dt
+
+    # laser with spacebar outside the event loop!
+    if keys_justpressed[pygame.K_SPACE]:
+        laser_rect = laser_surf.get_frect(bottomleft = (20,WIN_HEIGHT-20))
+        laser_rect.midbottom = player_rect.midtop
+        lasers.append(laser_rect)
+
 
     display_surface.fill("gray")
     # Stars in Background
@@ -91,9 +103,11 @@ while running:
         player_direction.x *= -1
     if (player_rect.bottom > WIN_HEIGHT or player_rect.top<0):
         player_direction.y *= -1
-    player_rect.center += player_direction*player_speed*dt
 
     display_surface.blit(meteor_surf,meteor_rect)
+
+
+
     #display lasers and remove them. Use duplicate list to savely remove items from the original list
     for laser_rect in list(lasers):
         if laser_rect.bottom < 0:

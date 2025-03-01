@@ -87,6 +87,17 @@ def collisions():
     pygame.sprite.groupcollide(laser_sprites,meteor_sprites,True,True)
     return True
 
+def display_score():
+    current_time = str(int(pygame.time.get_ticks()/100))
+    text_surf = font.render(current_time,True,'#FAFAFA')
+    text_rect = text_surf.get_frect(midbottom = (WIN_WIDTH/2,WIN_HEIGHT-50))
+    text_surrounder = pygame.Surface((text_rect.width+10,text_rect.height+5)).convert_alpha()
+    text_surrounder.fill((0,0,0,0))
+    pygame.draw.rect(text_surrounder, '#FAFAFA', text_surrounder.get_rect(), 2,5)
+    display_surface.blit(text_surrounder,text_surrounder.get_frect(center = text_rect.center).inflate(5,5).move(3,-5))
+    display_surface.blit(text_surf,text_rect)
+
+
 # general setup
 pygame.init()
 
@@ -100,10 +111,12 @@ running = True
 
 # Improved way to handle surfaces/rect with sprites!
 
-# Import sprites we want to reuse:
+# Import assets:
 star_surf = pygame.image.load(path.join('images','star.png')).convert_alpha()
 laser_surf = pygame.image.load(path.join('images','laser.png')).convert_alpha()  
 meteor_surf = pygame.image.load(path.join('images','meteor.png')).convert_alpha()
+font = pygame.font.Font(path.join('images','Oxanium-Bold.ttf'), 40)
+text_surf = font.render('text',True,'#FAFAFA')
 
 all_sprites = pygame.sprite.Group()
 meteor_sprites = pygame.sprite.Group()
@@ -125,11 +138,10 @@ while running:
 
     # Event loop
     for event in pygame.event.get():
-        if event.type == pygame.QUIT:
+        if event.type == pygame.QUIT or keys[pygame.K_ESCAPE]:
             running = False
         if event.type == meteor_event:
             Meteor(meteor_surf, None ,all_sprites, meteor_sprites)
-
 
 
     # Update all the sprites at once
@@ -138,20 +150,19 @@ while running:
 
     # Use draw function for our sprites and groups!
     #draw the game
-    display_surface.fill("gray")
+    display_surface.fill("#3a2e3f")
     # Sprites will be drawn in order they were inserted!
     all_sprites.draw(display_surface)
-
-
+    display_score()
     # Check Collisions
-    running = collisions()
+    running = running and collisions()
     #for l_sprite in laser_sprites:
     #    collided_sprites = pygame.sprite.spritecollide(l_sprite,meteor_spritesd,True)
     #    if collided_sprites:
     #        l_sprite.kill()
 
     pygame.display.update()
-    dt = clock.tick() / 1000
+    dt = clock.tick(200) / 1000
 
     # Preparations for next run
 
@@ -159,6 +170,6 @@ while running:
         meteor_spawn_cooldown = meteor_spawn_cooldown*0.99
         pygame.time.set_timer(meteor_event,int(meteor_spawn_cooldown))
 
-print(f"Score: {pygame.time.get_ticks()//1000}")
+print(f"Score: {pygame.time.get_ticks()//100}")
 
 pygame.quit()

@@ -33,7 +33,7 @@ class Player(pygame.sprite.Sprite):
         self.direction.y = int(keys[pygame.K_s]) - int(keys[pygame.K_w])
         self.rect.center += self.direction *dt*self.player_speed
         if keys_justpressed[pygame.K_SPACE] and self.can_shoot:
-            print("Play shooting animation!!")
+            Laser(laser_surf,self.rect.midtop,all_sprites)
             self.can_shoot = False
             self.laser_shoot_time = pygame.time.get_ticks()
         self.laser_timer()
@@ -45,18 +45,31 @@ class Star(pygame.sprite.Sprite):
         self.rect = self.image.get_frect(center = (random.randint(0,WIN_WIDTH-1),random.randint(0,WIN_HEIGHT-1)))
 
 class Meteor(pygame.sprite.Sprite):
-    def __init__(self, pos, surf, *groups):
+    def __init__(self, surf, pos, *groups):
         super().__init__(*groups)
         self.image = surf
+        if pos == None:
+            pos = (random.randint(200,WIN_WIDTH-200),random.randint(0,WIN_HEIGHT-200))
         self.rect = self.image.get_frect(center = pos)
+        self.creationtime = pygame.time.get_ticks()
+    
+    def update(self, key, keys_justpressed,dt):
+        if pygame.time.get_ticks()-self.creationtime>2000:
+            self.kill()
 
 
 class Laser(pygame.sprite.Sprite):
-    def __init__(self, pos, surf, *groups):
+    def __init__(self, surf, pos, *groups):
         super().__init__(*groups)
         self.image = surf
         self.rect = self.image.get_frect(midbottom = pos)
-        self.direction = pygame.Vector2()
+        self.direction = pygame.Vector2(0,-1)
+        self.shootingspeed = 1000
+
+    def update(self,keys,keys_justpressed,dt):
+        self.rect.center += self.direction*self.shootingspeed*dt
+        if self.rect.bottom < 0:
+            self.kill()
 
 
 # general setup
@@ -79,7 +92,7 @@ meteor_surf = pygame.image.load(path.join('images','meteor.png')).convert_alpha(
 
 all_sprites = pygame.sprite.Group()
 stars = [Star(star_surf,all_sprites) for _ in range(20)]
-meteor = Meteor((WIN_WIDTH //2 , WIN_HEIGHT //2),meteor_surf,all_sprites)
+meteor = Meteor(meteor_surf,(WIN_WIDTH //2 , WIN_HEIGHT //2),all_sprites)
 player = Player(all_sprites)
 
 
@@ -97,16 +110,18 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == meteor_event:
-            print('create meteor')
-    #draw the game
+            Meteor(meteor_surf, None ,all_sprites)
 
 
+
+    # Update all the sprites at once
     all_sprites.update(keys,keys_justpressed,dt)
 
-    display_surface.fill("gray")
 
     # Use draw function for our sprites and groups!
-
+    #draw the game
+    display_surface.fill("gray")
+    # Sprites will be drawn in order they were inserted!
     all_sprites.draw(display_surface)
 
     pygame.display.update()

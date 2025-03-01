@@ -37,8 +37,7 @@ meteor_surf = pygame.image.load(path.join('images','meteor.png')).convert_alpha(
 meteor_rect = meteor_surf.get_frect(center = (WIN_WIDTH //2 , WIN_HEIGHT //2))
 
 laser_surf = pygame.image.load(path.join('images','laser.png')).convert_alpha()
-laser_rect = laser_surf.get_frect(bottomleft = (20,WIN_HEIGHT-20))
-
+lasers = []
 # We can create plain (F)rects as well.
 
 
@@ -54,12 +53,26 @@ while running:
                 player_direction.x = -1
             if event.key == pygame.K_w:
                 player_direction.y = -1
-            if event.key == pygame.K_s:
-                player_direction.y = 1
-        if event.type == pygame.MOUSEBUTTONDOWN:
+        # The outcommented parts are implemented outside the event loop instead!
+        #    if event.key == pygame.K_s:
+        #        player_direction.y = 1
+        #if event.type == pygame.MOUSEBUTTONDOWN:
+        #    laser_rect = laser_surf.get_frect(bottomleft = (20,WIN_HEIGHT-20))
+        #    laser_rect.midbottom = event.pos
+        #    lasers.append(laser_rect)
+        if event.type == pygame.MOUSEMOTION:
             player_rect.center = event.pos
-
     #draw the game
+
+
+    # inputs without the event loop!
+    if (pygame.mouse.get_just_pressed()[0]):
+        laser_rect = laser_surf.get_frect(bottomleft = (20,WIN_HEIGHT-20))
+        laser_rect.midbottom = pygame.mouse.get_pos()
+        lasers.append(laser_rect)
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_s]:
+        player_direction.y = 1
 
     display_surface.fill("gray")
     # Stars in Background
@@ -74,7 +87,14 @@ while running:
     player_rect.center += player_direction*player_speed*dt
 
     display_surface.blit(meteor_surf,meteor_rect)
-    display_surface.blit(laser_surf,laser_rect)
+    #display lasers and remove them. Use duplicate list to savely remove items from the original list
+    for laser_rect in list(lasers):
+        if laser_rect.bottom < 0:
+            lasers.remove(laser_rect)
+        else:
+            laser_rect.top -= 100*dt
+            display_surface.blit(laser_surf,laser_rect)
+
     display_surface.blit(player_surf,player_rect)
     pygame.display.update()
     dt = clock.tick() / 1000

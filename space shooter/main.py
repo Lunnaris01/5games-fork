@@ -6,7 +6,7 @@ import numpy as np
 # CONSTS
 
 WIN_WIDTH, WIN_HEIGHT = 1280,720
-
+PLAYER_STARTING_HEALTH = 3
 # CLASSES
 
 class Player(pygame.sprite.Sprite):
@@ -15,6 +15,7 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.image.load(path.join('images','player.png')).convert_alpha()
         self.rect = self.image.get_frect(midbottom = (WIN_WIDTH //2-50 , WIN_HEIGHT-5))
         self.player_speed = 250
+        self.health = PLAYER_STARTING_HEALTH
         self.direction = pygame.Vector2()
 
         # mask
@@ -30,7 +31,8 @@ class Player(pygame.sprite.Sprite):
             if pygame.time.get_ticks()-self.laser_shoot_time > self.cooldown_duration:
                 self.can_shoot = True
             
-            
+    def lose_health(self):
+        self.health -=1
 
     def update(self,keys,keys_justpressed,dt):
         self.direction.x = int(keys[pygame.K_d]) - int(keys[pygame.K_a])
@@ -39,8 +41,7 @@ class Player(pygame.sprite.Sprite):
         # clip position to remain in game window
         self.rect.left = np.clip(self.rect.left,0,WIN_WIDTH-self.rect.width)
         self.rect.top = np.clip(self.rect.top,0,WIN_HEIGHT-self.rect.height)
-
-
+        
         if keys[pygame.K_SPACE] and self.can_shoot:
             Laser(laser_surf,self.rect.midtop,all_sprites,laser_sprites)
             self.can_shoot = False
@@ -85,7 +86,8 @@ class Laser(pygame.sprite.Sprite):
         self.rect = self.image.get_frect(midbottom = pos)
         self.direction = pygame.Vector2(0,-1)
         self.shootingspeed = 1000
-        self.mask = pygame.mask.from_surface(self.image)    
+        self.mask = pygame.mask.from_surface(self.image)
+        laser_sound.play()    
 
     def update(self,keys,keys_justpressed,dt):
         self.rect.center += self.direction*self.shootingspeed*dt
@@ -99,21 +101,25 @@ class AnimatedExplosion(pygame.sprite.Sprite):
         self.frames = list(frames)
         self.image = frames[0]
         self.rect = self.image.get_frect(center = pos)
-        self.last_animate = pygame.time.get_ticks()
+        self.animation_index = 0.0
+        explosion_sound.play()
 
     def update(self,keys,keys_justpresse,dt):
-        cticks = pygame.time.get_ticks()
-        if cticks - self.last_animate >100:
-            if self.frames != []:
-                self.image = self.frames.pop(0)
-                self.last_animate = cticks
+            if self.animation_index<len(self.frames):
+                self.image = self.frames[int(self.animation_index)]
+                self.animation_index += dt*35
             else:
                 self.kill()
 
 
 def collisions():
-    if (pygame.sprite.spritecollide(player,meteor_sprites,False,pygame.sprite.collide_mask)):
-        return False
+    print(player.health)
+    if (pygame.sprite.spritecollide(player,meteor_sprites,True,pygame.sprite.collide_mask)):
+        damage_sound.play()
+        player.lose_health()
+        print(player.health)
+        if player.health<1:
+            return False
     for laser in laser_sprites:
         collision_list = pygame.sprite.spritecollide(laser,meteor_sprites,True)
         for collision in collision_list:
@@ -147,12 +153,20 @@ running = True
 # Improved way to handle surfaces/rect with sprites!
 
 # Import assets:
+# Sprite Objects 
 star_surf = pygame.image.load(path.join('images','star.png')).convert_alpha()
 laser_surf = pygame.image.load(path.join('images','laser.png')).convert_alpha()  
 meteor_surf = pygame.image.load(path.join('images','meteor.png')).convert_alpha()
+# Fonts/text
 font = pygame.font.Font(path.join('images','Oxanium-Bold.ttf'), 40)
 text_surf = font.render('text',True,'#FAFAFA')
+# Animations
 explosion_frames = [pygame.image.load(path.join('images','explosion',x)).convert_alpha() for x in listdir(path.join('images','explosion'))]
+# Sounds
+laser_sound = pygame.mixer.Sound(path.join('audio','laser.wav'))
+explosion_sound = pygame.mixer.Sound(path.join('audio','explosion.wav'))
+game_music = pygame.mixer.Sound(path.join('audio','game_music.wav'))
+damage_sound = pygame.mixer.Sound(path.join('audio','damage.ogg'))
 
 all_sprites = pygame.sprite.Group()
 meteor_sprites = pygame.sprite.Group()
@@ -161,11 +175,11 @@ laser_sprites = pygame.sprite.Group()
 stars = [Star(star_surf,all_sprites) for _ in range(20)]
 player = Player(all_sprites)
 
-
 # custom events -> meteor spawning
 meteor_event = pygame.event.custom_type()
 meteor_spawn_cooldown = 500
 pygame.time.set_timer(meteor_event,meteor_spawn_cooldown)
+game_music.play(loops = -1)
 while running:
 
     keys = pygame.key.get_pressed()

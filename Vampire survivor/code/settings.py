@@ -1,6 +1,7 @@
 import pygame 
-from os.path import join 
-from os import walk
+from os import walk, path, listdir
 
 WINDOW_WIDTH, WINDOW_HEIGHT = 1280,720 
+WIN_CENTER = (WINDOW_WIDTH/2,WINDOW_HEIGHT/2)
+BACKGROUND_COLOR = '#222222'
 TILE_SIZE = 64

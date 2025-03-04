@@ -4,7 +4,7 @@ import random
 import numpy as np
 
 class Ball(pygame.sprite.Sprite):
-    def __init__(self, size, speed, pos, *groups):
+    def __init__(self, size, speed, pos, game, *groups):
         super().__init__(*groups)
 
         # Settings
@@ -23,6 +23,7 @@ class Ball(pygame.sprite.Sprite):
 
         # Access to other entities
         self.paddle_sprites = None
+        self.game = game
 
 
     def collision(self, direction):
@@ -32,9 +33,16 @@ class Ball(pygame.sprite.Sprite):
                     if self.rect.right > sprite.rect.left and self.old_rect.right <= sprite.old_rect.left:
                         self.rect.right = sprite.rect.left
                         self.bounce_ball(direction,sprite)
+                    if self.rect.left <= sprite.rect.right and self.old_rect.left >= sprite.old_rect.right:
+                        self.rect.left = sprite.rect.right
+                        self.bounce_ball(direction,sprite)
+
                 if direction == 'vertical':
                     if self.rect.bottom > sprite.rect.top and self.old_rect.bottom <= sprite.old_rect.top:
                         self.rect.bottom = sprite.rect.top
+                        self.bounce_ball(direction,sprite)
+                    if self.rect.top <= sprite.rect.bottom and self.old_rect.top >= sprite.old_rect.bottom:
+                        self.rect.top = sprite.rect.bottom
                         self.bounce_ball(direction,sprite)
 
 
@@ -49,8 +57,11 @@ class Ball(pygame.sprite.Sprite):
         self.collision('vertical')
 
         if self.rect.right>WINDOW_WIDTH or self.rect.left<0:
-            self.rect.right = np.clip(self.rect.right,self.size[0], WINDOW_WIDTH)
-            self.direction.x *= -1
+            scorechange = (1,0) if self.rect.right>WINDOW_WIDTH else (0,1)
+            self.game.score = (self.game.score[0] + scorechange[0],self.game.score[1]+scorechange[1])
+            self.game.reset_ball()
+            #self.rect.right = np.clip(self.rect.right,self.size[0], WINDOW_WIDTH)
+            #self.direction.x *= -1
 
         if self.rect.bottom>WINDOW_HEIGHT or self.rect.top<0:
             self.rect.bottom = np.clip(self.rect.bottom,self.size[1], WINDOW_HEIGHT)
@@ -61,6 +72,8 @@ class Ball(pygame.sprite.Sprite):
             offset = (sprite.rect.centery - self.rect.centery)
             self.direction.y = -offset/(sprite.rect.height/2)
             self.direction.x *= -1
+        if direction == 'vertical':
+            self.direction.y *=-1
             
 
 

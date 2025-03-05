@@ -1,7 +1,7 @@
 from settings import *
 from pytmx.util_pygame import load_pygame
 from os import path, listdir
-from sprite import Sprite, Player, Worm
+from sprite import Sprite, Player, Worm, Bee
 from group import AllSprites
 
 class Game:
@@ -20,6 +20,7 @@ class Game:
         self.all_sprites = AllSprites()
         self.collision_sprites = pygame.sprite.Group()
         self.worm_sprites = pygame.sprite.Group()
+        self.bee_sprites = pygame.sprite.Group()
 
         self.setup()
 
@@ -35,6 +36,8 @@ class Game:
                 self.player.set_collision_sprites(self.collision_sprites)
             if obj.name == 'Worm':
                 worm = Worm((obj.x,obj.y),(obj.width,obj.height),self.worm_animations,self.all_sprites,self.worm_sprites)
+            if obj.name == 'Bee':
+                bee = Bee((obj.x,obj.y),(obj.width,obj.height),self.bee_animations,self.all_sprites,self.bee_sprites)
 
     def load_assets(self):
         self.player_animations = [pygame.image.load(path.join('images','player',frame)) for frame in sorted(listdir(path.join('images','player')))]
@@ -42,6 +45,11 @@ class Game:
         self.bee_animations = [pygame.image.load(path.join('images','enemies','bee',frame)) for frame in listdir(path.join('images','enemies','bee'))]
         self.gun_bullet_image = pygame.image.load(path.join('images','gun','bullet.png'))
         self.gun_fire_image = pygame.image.load(path.join('images','gun','fire.png'))
+
+        self.sound_impact = pygame.mixer.Sound(path.join('audio','impact.ogg'))
+        self.sound_game_music = pygame.mixer.Sound(path.join('audio','music.wav'))
+        self.sound_shoot = pygame.mixer.Sound(path.join('audio','shoot.wav'))
+        self.sound_game_music.play(loops=-1)
 
     def run(self):
         while self.running:

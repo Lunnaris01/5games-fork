@@ -122,7 +122,6 @@ class Worm(AnimatedSprite):
         self.move(dt)
 
     def move(self,dt):
-        keys = pygame.key.get_pressed()
 
         self.rect.x += self.direction.x*dt*self.speed
 
@@ -138,3 +137,42 @@ class Worm(AnimatedSprite):
         if not pygame.FRect.contains(self.movement_area,self.rect):
             self.direction.x *=-1
             self.rect.left = np.clip(self.rect.left,self.movement_area.left,self.movement_area.right-self.rect.width)
+
+
+
+class Bee(AnimatedSprite):
+    def __init__(self, pos, movement_area, surf, *groups):
+        super().__init__(pos, surf, False, *groups)
+        self.direction = pygame.Vector2(1,1)
+        self.speed = BEE_SPEED
+        self.yspeed = BEE_YSPEED
+        self.movement_area = pygame.rect.FRect(pos[0],pos[1],movement_area[0],movement_area[1])
+
+    def update(self, dt):
+        self.move(dt)
+
+    def move(self,dt):
+
+        self.rect.x += self.direction.x*dt*self.speed
+        self.check_boundaries('horizontal')
+        self.rect.y += self.direction.y*dt*self.yspeed
+        self.check_boundaries('vertical')
+
+        self.animation_index = (self.animation_index + dt*self.animation_speed) % self.animation_length
+        if self.direction.x > 0:
+            self.image = self.animation[int(self.animation_index)]
+        if self.direction.x < 0:
+            self.image = pygame.transform.flip(self.animation[int(self.animation_index)],True,False)
+    
+
+    def check_boundaries(self,direction):
+        if not pygame.FRect.contains(self.movement_area,self.rect):
+
+            if direction == 'horizontal':
+                if self.rect.left<self.movement_area.left or self.rect.right>self.movement_area.right:
+                    self.direction.x *=-1
+                    self.rect.left = np.clip(self.rect.left,self.movement_area.left,self.movement_area.right-self.rect.width)
+            if direction == 'vertical':
+                if self.rect.top<self.movement_area.top or self.rect.bottom>self.movement_area.bottom:
+                    self.direction.y *=-1
+                    self.rect.top = np.clip(self.rect.top,self.movement_area.top,self.movement_area.bottom-self.rect.height)

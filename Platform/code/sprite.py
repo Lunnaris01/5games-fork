@@ -1,6 +1,8 @@
 import pygame.freetype
 from settings import *
 import numpy as np
+from custom_timer import Timer
+
 class Sprite(pygame.sprite.Sprite):
     def __init__(self,pos:tuple,surf:pygame.Surface, is_background:bool, *groups):
         super().__init__(*groups)
@@ -12,34 +14,67 @@ class AnimatedSprite(pygame.sprite.Sprite):
     def __init__(self, pos:tuple, frames:list[pygame.Surface], is_background:bool, *groups):
         super().__init__(*groups)
         # Animation Setup
-        self.animation = frames[:2]
-        self.jump_animation = frames[-1]
-        self.animation_speed = PLAYER_ANIMATION_SPEED
+        self.animation = frames
+        self.animation_speed = 10
         self.animation_length = len(self.animation)
         self.animation_index = 0
         self.image = self.animation[0]
-        print (self.animation_length)
         # Movement and Logic
         self.rect = self.image.get_frect(topleft = pos)
         self.is_background = is_background
+
+class MultiAnimationSprite(pygame.sprite.Sprite):
+    def __init__(self, pos, animations, is_background, *groups):
+        super().__init__(*groups)
+        self.animations = animations
+        self.set_animation('default')
+        self.image = self.current_animation[self.animation_index]
+        self.animation_speed = 10
+
+        self.rect = self.image.get_frect(topleft = pos)
+        self.is_background = is_background
+
+    def set_animation(self,animation_name):
+        self.current_animation = self.animations[animation_name]
+        self.animation_index = 0
+        self.animation_length = len(self.current_animation)
 
 class BackgroundSprite(Sprite):
     def __init__(self, pos, surf, *groups):
         super().__init__(pos, surf, True, *groups)
 
 class Player(AnimatedSprite):
-    def __init__(self, pos, surf, *groups):
-        super().__init__(pos, surf, False, *groups)
+    def __init__(self, pos, frames, bullet_func, *groups):
+        super().__init__(pos, frames, False, *groups)
+        self.animation = frames[:2]
+        self.jump_animation = frames[-2]
+        self.in_air_animation = frames[-1]
+        self.animation_length = len(self.animation)
         self.x_speed = PLAYER_SPEED
         self.y_acceleration = 0
         self.direction = pygame.Vector2(0,0)
         self.flipanimation = False
-
+        self.animation_speed = PLAYER_ANIMATION_SPEED
         self.can_doublejump = True
+        self.bullet_func = bullet_func
+
+        self.health = 100
+
+        # Timers
+        self.timer_shoot = Timer(500)
 
     def update(self, dt):
         self.move(dt)
+        self.input()
+        self.timer_shoot.update()
 
+
+
+    def input(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_e] and not self.timer_shoot.active:
+            self.bullet_func(self.rect.center,-1 if self.flipanimation else 1)
+            self.timer_shoot.activate()
 
     def move(self,dt):
         keys = pygame.key.get_pressed()
@@ -85,6 +120,10 @@ class Player(AnimatedSprite):
         if keys[pygame.K_LCTRL] and self.can_jump():
             self.image = pygame.transform.flip(self.jump_animation,self.flipanimation,False)
 
+        if not self.can_jump():
+            self.image = pygame.transform.flip(self.in_air_animation,self.flipanimation,False)
+
+
         if self.rect.bottom>50000:
             self.kill()
 
@@ -109,6 +148,15 @@ class Player(AnimatedSprite):
                     if self.direction.y < 0: self.rect.top = sprite.rect.bottom
                     self.direction.y = 0
 
+
+class Bullet(Sprite):
+    def __init__(self, pos, direction, surf, *groups):
+        super().__init__(pos, surf, False, *groups)
+        self.direction = direction
+        self.speed = 850
+
+    def update(self, dt):
+        self.rect.x += self.direction * self.speed * dt
 
 
 class Worm(AnimatedSprite):
@@ -140,39 +188,63 @@ class Worm(AnimatedSprite):
 
 
 
-class Bee(AnimatedSprite):
-    def __init__(self, pos, movement_area, surf, *groups):
-        super().__init__(pos, surf, False, *groups)
+class Bee(MultiAnimationSprite):
+    def __init__(self, pos, movement_area, animations, *groups):
+        super().__init__(pos, animations, False, *groups)
         self.direction = pygame.Vector2(1,1)
         self.speed = BEE_SPEED
-        self.yspeed = BEE_YSPEED
+        self.yspeed = BEE_SPEED/3
         self.movement_area = pygame.rect.FRect(pos[0],pos[1],movement_area[0],movement_area[1])
+        self.radius = 300
+        self.angry = False
 
     def update(self, dt):
         self.move(dt)
 
     def move(self,dt):
-
+        if self.angry:
+            self.direction = pygame.Vector2(self.target.rect.center) - pygame.Vector2(self.rect.center)
+            self.direction = self.direction.normalize() if self.direction else self.direction
+                            
         self.rect.x += self.direction.x*dt*self.speed
         self.check_boundaries('horizontal')
         self.rect.y += self.direction.y*dt*self.yspeed
         self.check_boundaries('vertical')
 
         self.animation_index = (self.animation_index + dt*self.animation_speed) % self.animation_length
-        if self.direction.x > 0:
-            self.image = self.animation[int(self.animation_index)]
         if self.direction.x < 0:
-            self.image = pygame.transform.flip(self.animation[int(self.animation_index)],True,False)
+            self.image = self.current_animation[int(self.animation_index)]
+        if self.direction.x > 0:
+            self.image = pygame.transform.flip(self.current_animation[int(self.animation_index)],True,False)
     
 
     def check_boundaries(self,direction):
-        if not pygame.FRect.contains(self.movement_area,self.rect):
+        if not self.angry:
+            if not pygame.FRect.contains(self.movement_area,self.rect):
+                if not pygame.FRect.collidepoint(self.movement_area,self.rect.centerx,self.rect.centery):
+                    
+                    self.direction = pygame.Vector2(self.movement_area.center) - pygame.Vector2(self.rect.center)
+                    self.direction = self.direction.normalize() if self.direction else self.direction
 
-            if direction == 'horizontal':
-                if self.rect.left<self.movement_area.left or self.rect.right>self.movement_area.right:
-                    self.direction.x *=-1
-                    self.rect.left = np.clip(self.rect.left,self.movement_area.left,self.movement_area.right-self.rect.width)
-            if direction == 'vertical':
-                if self.rect.top<self.movement_area.top or self.rect.bottom>self.movement_area.bottom:
-                    self.direction.y *=-1
-                    self.rect.top = np.clip(self.rect.top,self.movement_area.top,self.movement_area.bottom-self.rect.height)
+                    return
+                
+                if direction == 'horizontal':
+                    if self.rect.left<self.movement_area.left or self.rect.right>self.movement_area.right:
+                        self.direction.x *=-1
+                        self.rect.left = np.clip(self.rect.left,self.movement_area.left,self.movement_area.right-self.rect.width)
+                if direction == 'vertical':
+                    if self.rect.top<self.movement_area.top or self.rect.bottom>self.movement_area.bottom:
+                        self.direction.y *=-1
+                        self.rect.top = np.clip(self.rect.top,self.movement_area.top,self.movement_area.bottom-self.rect.height)
+
+    def get_angry (self,target):
+        if not self.angry:
+            self.angry = True
+            self.target = target
+            self.yspeed *=3
+            self.set_animation('angry')
+
+    def calm_down(self):
+        self.angry = False
+        self.yspeed /=3
+        self.set_animation('default')

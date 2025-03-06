@@ -195,11 +195,14 @@ class Bee(MultiAnimationSprite):
         self.speed = BEE_SPEED
         self.yspeed = BEE_SPEED/3
         self.movement_area = pygame.rect.FRect(pos[0],pos[1],movement_area[0],movement_area[1])
-        self.radius = 300
+        self.radius = 700
         self.angry = False
+        self.returning = False
+        self.dashtimer = Timer(1000,self.end_dash,False,False)
 
     def update(self, dt):
         self.move(dt)
+        self.dashtimer.update()
 
     def move(self,dt):
         if self.angry:
@@ -236,6 +239,11 @@ class Bee(MultiAnimationSprite):
                     if self.rect.top<self.movement_area.top or self.rect.bottom>self.movement_area.bottom:
                         self.direction.y *=-1
                         self.rect.top = np.clip(self.rect.top,self.movement_area.top,self.movement_area.bottom-self.rect.height)
+            else:
+                if self.returning:
+                    self.returning = False
+                    self.direction.x = 1
+                    self.direction.y = 1
 
     def get_angry (self,target):
         if not self.angry:
@@ -243,8 +251,20 @@ class Bee(MultiAnimationSprite):
             self.target = target
             self.yspeed *=3
             self.set_animation('angry')
+            self.dash()
 
     def calm_down(self):
         self.angry = False
         self.yspeed /=3
         self.set_animation('default')
+        self.returning = True
+
+    def dash(self):
+        self.speed *=2
+        self.yspeed *=2
+        self.dashtimer.activate()
+    
+    def end_dash(self):
+        print("ending dash")
+        self.speed /=2
+        self.yspeed/=2

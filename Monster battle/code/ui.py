@@ -1,9 +1,10 @@
 from settings import *
 
 class UI:
-    def __init__(self, game):
+    def __init__(self, game, get_input_func):
         self.display_surface = pygame.display.get_surface()
         self.game = game
+        self.get_input_func = get_input_func
         self.font = pygame.font.Font(None,30)
         self.left = WINDOW_WIDTH / 2 - 100
         self.top = WINDOW_HEIGHT /2 + 50
@@ -117,7 +118,7 @@ class UI:
 
     def input(self):
         keys = pygame.key.get_just_pressed()
-        if self.currentmenu == 'general':
+        if self.currentmenu == 'general' or self.currentmenu == 'attack':
             self.menu_index['row'] = (self.menu_index['row'] +int(keys[pygame.K_DOWN]) - int(keys[pygame.K_UP]))%self.rows
             self.menu_index['col'] = ( self.menu_index['col'] + int(keys[pygame.K_RIGHT]) - int(keys[pygame.K_LEFT]))%self.cols
         elif self.currentmenu == 'switch':
@@ -134,11 +135,18 @@ class UI:
                 self.bag_options_func[self.bag_options[index]]()
             elif self.currentmenu == 'switch':
                 self.switch_monster()
+            elif self.currentmenu == 'attack':
+                self.get_input_func(self.currentmenu,self.monster.abilities[index])
+
+            
         if keys[pygame.K_ESCAPE]:
             if self.currentmenu == 'general':
                 return False
             else:
                 self.currentmenu = 'general'
+                self.menu_index['row'] = 0
+                self.menu_index['col'] = 0
+                self.monster_menu_index = 0
             
         return True
                 

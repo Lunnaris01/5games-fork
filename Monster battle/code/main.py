@@ -28,7 +28,7 @@ class Game:
         self.opponent = Opponent(opponent_name, self.front_surfs[opponent_name], self.all_sprites)
 
         # UI
-        self.ui = UI(self)
+        self.ui = UI(self,self.get_input)
 
 
     def import_assets(self):
@@ -47,6 +47,16 @@ class Game:
         self.all_sprites.remove(self.monster)
         self.all_sprites.add(monster)
         self.monster = monster
+    
+    def get_input(self, state, data = None):
+        print(state,data)
+        if state == 'attack':
+            self.damage_opponent(data)
+
+    def damage_opponent(self,ability):
+        damage = calculate_damage(ability,self.opponent)
+        self.opponent.health -= damage
+        print(f"Hitting Opponent with {ability} for {damage} damage. Remaining health: {self.opponent.health}")
 
 
     def run(self):
@@ -71,6 +81,10 @@ class Game:
         
         pygame.quit()
     
+def calculate_damage(ability,opponent):
+    ability_element = ABILITIES_DATA[ability]['element']
+    return ELEMENT_DATA[ability_element][opponent.element]*ABILITIES_DATA[ability]['damage'] 
+
 if __name__ == '__main__':
     game = Game()
     game.run()
